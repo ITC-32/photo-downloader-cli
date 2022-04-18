@@ -131,7 +131,8 @@ file.html
 # mkdocs documentation
 /site
 
-geckodriver.exe
+drivers/geckodriver.exe
+drivers/chromedriver.exe
 
 # mypy
 .mypy_cache/
@@ -148,3 +149,4 @@ dmypy.json
 cython_debug/
 
 .idea/
+pages/

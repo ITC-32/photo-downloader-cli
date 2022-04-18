@@ -1,6 +1,7 @@
 import random
 
 import requests
+from requests import Response
 
 
 class RequestManager:
@@ -12,7 +13,14 @@ class RequestManager:
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.61"
     ]
 
-    def get(self, url: str, headers: dict = None, **kwargs):
+    def get_url_search_rubric(self, search_rubric: str, delimiter: str) -> None:
+        """Метод для получения нужной URL"""
+
+        pass
+
+    def get(self, url: str, headers: dict = None, **kwargs) -> Response:
+        """Метод для get запроса"""
+
         if headers:
             headers['User-Agent'] = random.choice(self.user_agents_list)
         else:
@@ -21,7 +29,9 @@ class RequestManager:
             }
         return requests.get(url, headers=headers, **kwargs)
 
-    def post(self, url: str, headers: dict = None, **kwargs):
+    def post(self, url: str, headers: dict = None, **kwargs) -> Response:
+        """Метод для post запроса"""
+
         if headers:
             headers['User-Agent'] = random.choice(self.user_agents_list)
         else:
@@ -30,7 +40,9 @@ class RequestManager:
             }
         return requests.post(url, headers=headers, **kwargs)
 
-    def put(self, url: str, headers: dict = None, **kwargs):
+    def put(self, url: str, headers: dict = None, **kwargs) -> Response:
+        """Метод для put запроса"""
+
         if headers:
             headers['User-Agent'] = random.choice(self.user_agents_list)
         else:
@@ -39,7 +51,9 @@ class RequestManager:
             }
         return requests.put(url, headers=headers, **kwargs)
 
-    def patch(self, url: str, headers: dict = None, **kwargs):
+    def patch(self, url: str, headers: dict = None, **kwargs) -> Response:
+        """Метод для patch запроса"""
+
         if headers:
             headers['User-Agent'] = random.choice(self.user_agents_list)
         else:

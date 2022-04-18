@@ -1,18 +1,16 @@
 import time
-from pathlib import Path
 
-from PIL import Image
 from bs4 import BeautifulSoup
 
-from utils.downloaders import PhotoDownloader
+from config.configs import BASE_DIR, PARSER_DATA_DICT_EXCEL
+from utils.downloaders import PhotoManager
 from utils.file_managers import ExcelManager
 
 
-class DepositPhotosDownloader(PhotoDownloader, ExcelManager):
+class DepositPhotosDownloader(PhotoManager, ExcelManager):
     """Парсинг + скачивание фото с сайта depositphotos.com"""
 
-    BASE_LINK = "https://ru.depositphotos.com/stock-photos"
-    BASE_DIR = Path(__file__).resolve().parent.parent
+    base_link = "https://ru.depositphotos.com/stock-photos"
 
     def __init__(self, coordinates: dict) -> None:
         super(DepositPhotosDownloader, self).__init__(coordinates)
@@ -21,28 +19,26 @@ class DepositPhotosDownloader(PhotoDownloader, ExcelManager):
     def to_soup(content: [str, bytes]) -> BeautifulSoup:
         return BeautifulSoup(content, "html.parser")
 
-    def search_and_to_soup(self, search_rubric: str, offset: int) -> list:
-        link = f"{self.BASE_LINK}/{search_rubric.replace(' ', '-')}.html"
-        soups_list = []
-        for page in range(1, offset + 1):
-            get_page = self.get(link)
-            if get_page.status_code != 200:
-                time.sleep(3)
-                continue
-            soups_list.append(self.to_soup(get_page.text))
-            link = f"{link}?offset={page * 100}"
-        return soups_list
+    def get_url_search_rubric(self, search_rubric: str, delimiter: str) -> str:
+        """Переопределяем метод для построения URL"""
+
+        return f"{self.base_link}/{search_rubric.replace(' ', delimiter)}.html"
+
+    def search_and_to_soup(self, search_rubric: str, delimiter: str):
+        link = self.get_url_search_rubric(search_rubric, delimiter)
+        get_page = self.get(link)
+        if get_page.status_code != 200:
+            return False
+        return self.to_soup(get_page.text)
 
     @staticmethod
-    def parse_photo_links(soup_list: list) -> list:
+    def parse_photo_links(soup: BeautifulSoup) -> list:
         photo_links = []
-        for soup in soup_list:
-            get_photo_link = soup.select("a > picture > img")
-            if get_photo_link:
-                for link in get_photo_link:
-                    photo_links.append(link.get("src") or link.get("data-src"))
-            else:
-                continue
+        get_photo_link = soup.select("a > picture > img")
+        if not get_photo_link:
+            return []
+        for link in get_photo_link:
+            photo_links.append(link.get("src") or link.get("data-src"))
         print(f"Спарсены {len(photo_links)} кол-во картинок с сайта depositphotos.com! переходим к сохранению!")
         return photo_links
 
@@ -52,21 +48,19 @@ class DepositPhotosDownloader(PhotoDownloader, ExcelManager):
         for link in photo_links_list:
             photo_name = link.split("/")[-1]
             photo_format = photo_name.split(".")[-1]
-            photo_path = str(self.BASE_DIR / f"{directory_path}/{photo_name}")
-            self.get_directory_or_create(str(self.BASE_DIR / directory_path))
+            photo_path = str(BASE_DIR / f"{directory_path}/{photo_name}")
+            self.get_directory_or_create(str(BASE_DIR / directory_path))
             self.download_photo(link, photo_path)
-            with Image.open(photo_path) as img:
-                width, height = img.size
-            sizes_data = {
+            width, height = self.get_photo_sizes(photo_path)
+            photo_info.append({
                 "file_name": photo_name,
                 "width": width,
                 "height": height,
                 "file_format": photo_format
-            }
-            photo_info.append(sizes_data)
+            })
             photo_count += 1
             time.sleep(1)
-        print(f"Скачаны {photo_count} шт. фото с сайта depositphotos.com по пути: {self.BASE_DIR / directory_path}")
+        print(f"Скачаны {photo_count} шт. фото с сайта depositphotos.com по пути: {BASE_DIR / directory_path}")
         return photo_info
 
     def insert_data(self, data_list: list, file_path: str) -> None:
@@ -83,11 +77,13 @@ class DepositPhotosDownloader(PhotoDownloader, ExcelManager):
         print(f"Данные успешно сохранены в excel по пути: {file_path}")
 
 
-def runner():
+def runner() -> None:
     get_rubric = input("Что ищем? Ввод: ")
-    get_directory = input("Вводите папку для сохранения фото(относительно текущей папки): ")
-    get_excel_directory = input("Вводите папку для сохранения в excel(относительно текущей папки): ")
-    get_file_name = input("Вводите название файла excel(без .xlsx): ")
+    get_directory = input("Вводите папку для сохранения фото(относительно текущей папки): ").strip().replace(
+        " ", "")
+    get_excel_directory = input("Вводите папку для сохранения в excel(относительно текущей папки): ").strip().replace(
+        " ", "")
+    get_file_name = input("Вводите название файла excel(без .xlsx): ").strip()
     try:
         get_offset = int(input("Сколько страниц хотим парсить(1 страница - 100 фото)? Ввод: "))
     except ValueError:
@@ -95,19 +91,20 @@ def runner():
         time.sleep(1)
         runner()
     else:
-        deposit_photos = DepositPhotosDownloader({
-            "A1": "Название фото",
-            "B1": "Ширина фото(px)",
-            "C1": "Высота фото(px)",
-            "D1": "Формат фото"
-        })
-        deposit_photos.get_directory_or_create(
-            str(deposit_photos.BASE_DIR / get_excel_directory.strip().replace(" ", "")))
-        photo_soup_list = deposit_photos.search_and_to_soup(get_rubric, get_offset)
-        photo_links_list = deposit_photos.parse_photo_links(photo_soup_list)
-        photos_info = deposit_photos.download_photos(get_directory, photo_links_list)
-        deposit_photos.insert_data(photos_info,
-                                   str(deposit_photos.BASE_DIR / f"{get_excel_directory}/{get_file_name}.xlsx"))
+        excel_file_folder = str(BASE_DIR / get_excel_directory)
+        deposit_photos = DepositPhotosDownloader(PARSER_DATA_DICT_EXCEL)
+        deposit_photos.get_directory_or_create(excel_file_folder)
+        all_photo_info = []
+        for i in range(1, get_offset + 1):
+            photo_soup = deposit_photos.search_and_to_soup(get_rubric, "-")
+            if not photo_soup:
+                continue
+            photo_links_list = deposit_photos.parse_photo_links(photo_soup)
+            if not photo_links_list:
+                continue
+            all_photo_info += deposit_photos.download_photos(get_directory, photo_links_list)
+        deposit_photos.insert_data(all_photo_info,
+                                   f"{excel_file_folder}/{get_file_name}.xlsx")
 
 
 if __name__ == "__main__":

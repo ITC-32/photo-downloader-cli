@@ -9,6 +9,8 @@
 ```
 python -m venv venv
 venv\Scripts\activate
+or 
+source env/bin/activate
 ```
 2. Установим зависимости
 ```
