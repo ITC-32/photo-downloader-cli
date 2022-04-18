@@ -52,7 +52,7 @@ class DepositPhotosDownloader(PhotoDownloader, ExcelManager):
         for link in photo_links_list:
             photo_name = link.split("/")[-1]
             photo_format = photo_name.split(".")[-1]
-            photo_path = self.BASE_DIR / f"{directory_path}/{photo_name}"
+            photo_path = str(self.BASE_DIR / f"{directory_path}/{photo_name}")
             self.get_directory_or_create(str(self.BASE_DIR / directory_path))
             self.download_photo(link, photo_path)
             with Image.open(photo_path) as img:
