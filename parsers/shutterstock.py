@@ -20,7 +20,7 @@ class ShutterstockDownloader(SeleniumManager, PhotoManager, ExcelManager, FileMa
                  driver: Type[WebDriver] = Firefox) -> None:
         super(ShutterstockDownloader, self).__init__(driver_path, driver, headless)
         ExcelManager.__init__(self, coordinates)
-        self.page_path = None
+        self.page_path = BASE_DIR / "pages/data.html"
 
     @staticmethod
     def to_soup(content: [str, bytes]) -> BeautifulSoup:
@@ -38,14 +38,13 @@ class ShutterstockDownloader(SeleniumManager, PhotoManager, ExcelManager, FileMa
         time.sleep(3)
         self.scroll_down(150)
         time.sleep(10)
-        self.get_directory_or_create(str(BASE_DIR / "pages"))
-        self.page_path = str(BASE_DIR / "pages/data.html")
-        self.save_file(self.page_path, "w", "utf-8", self.default_driver.page_source)
+        self.get_directory_or_create(str(self.page_path))
+        self.save_file(str(self.page_path), "w", "utf-8", self.default_driver.page_source)
         print("Парсер успешно отработал!")
         self.close_and_quit()
 
     def read_and_to_soup(self):
-        read_html = self.read_file(str(BASE_DIR / "pages/data.html"), "r", "utf-8")
+        read_html = self.read_file(str(self.page_path), "r", "utf-8")
         return self.to_soup(read_html)
 
     @staticmethod
