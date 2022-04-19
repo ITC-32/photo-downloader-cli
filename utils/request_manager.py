@@ -15,7 +15,6 @@ class RequestManager:
 
     def get_url_search_rubric(self, search_rubric: str, delimiter: str) -> None:
         """Метод для получения нужной URL"""
-
         pass
 
     def get(self, url: str, headers: dict = None, **kwargs) -> Response:

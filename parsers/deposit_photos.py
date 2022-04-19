@@ -7,7 +7,7 @@ from utils.downloaders import PhotoManager
 from utils.file_managers import ExcelManager
 
 
-class DepositPhotosDownloader(PhotoManager, ExcelManager):
+class DepositPhotosDownloader(ExcelManager, PhotoManager):
     """Парсинг + скачивание фото с сайта depositphotos.com"""
 
     base_link = "https://ru.depositphotos.com/stock-photos"

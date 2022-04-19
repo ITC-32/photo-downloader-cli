@@ -25,7 +25,7 @@ class ShutterstockDownloader(SeleniumManager, PhotoManager, ExcelManager, FileMa
     def get_url_search_rubric(self, search_rubric: str, delimiter: str) -> str:
         """Переопределяем метод для построения URL"""
 
-        return f"{self.base_link}/{search_rubric.replace(' ', delimiter)}.html"
+        return f"{self.base_link}/search/{search_rubric.strip().replace(' ', delimiter)}"
 
     def parse_photo_page_and_save(self, search_rubric, delimiter) -> None:
         """Метод для парсинга и сохранения страницы на файл"""
@@ -49,7 +49,7 @@ class ShutterstockDownloader(SeleniumManager, PhotoManager, ExcelManager, FileMa
         """Метод для чтение и парсинга ссылок с файла"""
 
         all_links = []
-        get_photo_link = soup.select("div.z_h_b900b > a.z_h_81637 > img")
+        get_photo_link = soup.select("div.jss197 > div.jss201 > img")
         if not get_photo_link:
             print("Ссылок не найдено!")
             return []
@@ -69,12 +69,12 @@ class ShutterstockDownloader(SeleniumManager, PhotoManager, ExcelManager, FileMa
         """Метод для скачивания и сохранения фото"""
 
         photo_info = []
-        self.get_directory_or_create(save_directory)
+        self.get_directory_or_create(str(BASE_DIR / save_directory))
         for link in links_list:
             try:
                 photo_name = link.split('/')[-1]
                 photo_format = photo_name.split(".")[-1]
-                photo_path = f"{save_directory}/{photo_name}"
+                photo_path = f"{str(BASE_DIR / save_directory / photo_name)}"
                 self.download_photo(link, photo_path)
                 photo_width, photo_height = self.get_photo_sizes(photo_path)
                 photo_info.append({
@@ -127,8 +127,9 @@ def runner() -> None:
             if not photo_links:
                 continue
             all_photo_info += shutterstock.download_and_save_photos(photo_links, get_directory)
-            shutterstock.base_link = f"{shutterstock.base_link}?offset={page * 100}"
-        shutterstock.insert_data(all_photo_info, f"{excel_file_folder}/{get_file_name}.xlsx")
+            shutterstock.base_link = f"{shutterstock.base_link}?page={page}"
+        if all_photo_info:
+            shutterstock.insert_data(all_photo_info, f"{excel_file_folder}/{get_file_name}.xlsx")
 
 
 if __name__ == "__main__":
