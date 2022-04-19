@@ -20,7 +20,8 @@ class ShutterstockDownloader(SeleniumManager, PhotoManager, ExcelManager, FileMa
                  driver: Type[WebDriver] = Firefox) -> None:
         super(ShutterstockDownloader, self).__init__(driver_path, driver, headless)
         ExcelManager.__init__(self, coordinates)
-        self.page_path = BASE_DIR / "pages/data.html"
+        self.page_directory = "pages"
+        self.page_path = BASE_DIR / f"{self.page_directory}/data.html"
 
     @staticmethod
     def to_soup(content: [str, bytes]) -> BeautifulSoup:
@@ -38,7 +39,7 @@ class ShutterstockDownloader(SeleniumManager, PhotoManager, ExcelManager, FileMa
         time.sleep(3)
         self.scroll_down(150)
         time.sleep(10)
-        self.get_directory_or_create(str(self.page_path))
+        self.get_directory_or_create(str(BASE_DIR / self.page_directory))
         self.save_file(str(self.page_path), "w", "utf-8", self.default_driver.page_source)
         print("Парсер успешно отработал!")
         self.close_and_quit()
@@ -72,12 +73,12 @@ class ShutterstockDownloader(SeleniumManager, PhotoManager, ExcelManager, FileMa
         """Метод для скачивания и сохранения фото"""
 
         photo_info = []
-        self.get_directory_or_create(str(BASE_DIR / save_directory))
+        self.get_directory_or_create(save_directory)
         for link in links_list:
             try:
                 photo_name = link.split('/')[-1]
                 photo_format = photo_name.split(".")[-1]
-                photo_path = f"{str(BASE_DIR / save_directory / photo_name)}"
+                photo_path = f"{save_directory}/{photo_name}"
                 self.download_photo(link, photo_path)
                 photo_width, photo_height = self.get_photo_sizes(photo_path)
                 photo_info.append({
@@ -129,7 +130,7 @@ def runner() -> None:
             photo_links = shutterstock.parse_links(soup)
             if not photo_links:
                 continue
-            all_photo_info += shutterstock.download_and_save_photos(photo_links, get_directory)
+            all_photo_info += shutterstock.download_and_save_photos(photo_links, str(BASE_DIR / get_directory))
             shutterstock.base_link = f"{shutterstock.base_link}?page={page}"
         if all_photo_info:
             shutterstock.insert_data(all_photo_info, f"{excel_file_folder}/{get_file_name}.xlsx")
