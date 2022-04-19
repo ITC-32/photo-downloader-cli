@@ -1,11 +1,14 @@
 import time
+from typing import Type
 
 from bs4 import BeautifulSoup
+from selenium.webdriver.android.webdriver import WebDriver
 
 from config.configs import BASE_DIR, PARSER_DATA_DICT_EXCEL
 from utils.browser_managers import SeleniumManager
 from utils.downloaders import PhotoManager
 from utils.file_managers import ExcelManager, FileManager
+from selenium.webdriver import Firefox
 
 
 class ShutterstockDownloader(SeleniumManager, PhotoManager, ExcelManager, FileManager):
@@ -13,8 +16,9 @@ class ShutterstockDownloader(SeleniumManager, PhotoManager, ExcelManager, FileMa
 
     base_link = "https://www.shutterstock.com/ru"
 
-    def __init__(self, driver_path: str, coordinates: dict) -> None:
-        super(ShutterstockDownloader, self).__init__(driver_path)
+    def __init__(self, driver_path: str, coordinates: dict, headless: bool = False,
+                 driver: Type[WebDriver] = Firefox) -> None:
+        super(ShutterstockDownloader, self).__init__(driver_path, driver, headless)
         ExcelManager.__init__(self, coordinates)
         self.page_path = None
 
@@ -117,7 +121,7 @@ def runner() -> None:
         runner()
     else:
         excel_file_folder = str(BASE_DIR / get_excel_directory)
-        shutterstock = ShutterstockDownloader(str(BASE_DIR / "drivers/geckodriver.exe"), PARSER_DATA_DICT_EXCEL)
+        shutterstock = ShutterstockDownloader(str(BASE_DIR / "drivers/geckodriver.exe"), PARSER_DATA_DICT_EXCEL, True)
         shutterstock.get_directory_or_create(excel_file_folder)
         all_photo_info = []
         for page in range(1, get_offset + 1):
