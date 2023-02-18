@@ -1,10 +1,9 @@
 import time
-
 from bs4 import BeautifulSoup
 
-from config.configs import BASE_DIR, PARSER_DATA_DICT_EXCEL
-from utils.downloaders import PhotoManager
-from utils.file_managers import ExcelManager
+from config import BASE_DIR
+from app.utils.downloaders import PhotoManager
+from app.utils.file_managers import ExcelManager
 
 
 class DepositPhotosDownloader(ExcelManager, PhotoManager):
@@ -75,37 +74,3 @@ class DepositPhotosDownloader(ExcelManager, PhotoManager):
             row += 1
         self.save_and_close(file_path)
         print(f"Данные успешно сохранены в excel по пути: {file_path}")
-
-
-def runner() -> None:
-    get_rubric = input("Что ищем? Ввод: ")
-    get_directory = input("Вводите папку для сохранения фото(относительно текущей папки): ").strip().replace(
-        " ", "")
-    get_excel_directory = input("Вводите папку для сохранения в excel(относительно текущей папки): ").strip().replace(
-        " ", "")
-    get_file_name = input("Вводите название файла excel(без .xlsx): ").strip()
-    try:
-        get_offset = int(input("Сколько страниц хотим парсить(1 страница - 100 фото)? Ввод: "))
-    except ValueError:
-        print("Не умеешь вводить цифру?")
-        time.sleep(1)
-        runner()
-    else:
-        excel_file_folder = str(BASE_DIR / get_excel_directory)
-        deposit_photos = DepositPhotosDownloader(PARSER_DATA_DICT_EXCEL)
-        deposit_photos.get_directory_or_create(excel_file_folder)
-        all_photo_info = []
-        for i in range(1, get_offset + 1):
-            photo_soup = deposit_photos.search_and_to_soup(get_rubric, "-")
-            if not photo_soup:
-                continue
-            photo_links_list = deposit_photos.parse_photo_links(photo_soup)
-            if not photo_links_list:
-                continue
-            all_photo_info += deposit_photos.download_photos(get_directory, photo_links_list)
-        deposit_photos.insert_data(all_photo_info,
-                                   f"{excel_file_folder}/{get_file_name}.xlsx")
-
-
-if __name__ == "__main__":
-    runner()

@@ -1,6 +1,6 @@
 from pathlib import Path
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent
 PARSER_DATA_DICT_EXCEL = {
     "A1": "Название фото",
     "B1": "Ширина фото(px)",

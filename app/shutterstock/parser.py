@@ -2,12 +2,12 @@ import time
 from typing import Type
 
 from bs4 import BeautifulSoup
-from selenium.webdriver.android.webdriver import WebDriver
+from selenium.webdriver.firefox.webdriver import WebDriver
 
-from config.configs import BASE_DIR, PARSER_DATA_DICT_EXCEL
-from utils.browser_managers import SeleniumManager
-from utils.downloaders import PhotoManager
-from utils.file_managers import ExcelManager, FileManager
+from config import BASE_DIR
+from app.utils.browser_managers import SeleniumManager
+from app.utils.downloaders import PhotoManager
+from app.utils.file_managers import ExcelManager, FileManager
 from selenium.webdriver import Firefox
 
 
@@ -53,7 +53,7 @@ class ShutterstockDownloader(SeleniumManager, PhotoManager, ExcelManager, FileMa
         """Метод для чтение и парсинга ссылок с файла"""
 
         all_links = []
-        get_photo_link = soup.select("div.jss197 > div.jss201 > img")
+        get_photo_link = soup.select("div.mui-1tx8836-assetItemContainer-assetItemContainer > div.mui-16jc9cy-letterboxingWrapper > img")
         if not get_photo_link:
             print("Ссылок не найдено!")
             return []
@@ -104,37 +104,3 @@ class ShutterstockDownloader(SeleniumManager, PhotoManager, ExcelManager, FileMa
             row += 1
         self.save_and_close(file_path)
         print(f"Данные успешно сохранены в excel по пути: {file_path}")
-
-
-def runner() -> None:
-    get_rubric = input("Что ищем? Ввод: ")
-    get_directory = input("Вводите папку для сохранения фото(относительно текущей папки): ").strip().replace(
-        " ", "")
-    get_excel_directory = input("Вводите папку для сохранения в excel(относительно текущей папки): ").strip().replace(
-        " ", "")
-    get_file_name = input("Вводите название файла excel(без .xlsx): ").strip()
-    try:
-        get_offset = int(input("Сколько страниц хотим парсить(1 страница - 100 фото)? Ввод: "))
-    except ValueError:
-        print("Не умеешь вводить цифру?")
-        time.sleep(1)
-        runner()
-    else:
-        excel_file_folder = str(BASE_DIR / get_excel_directory)
-        shutterstock = ShutterstockDownloader(str(BASE_DIR / "drivers/geckodriver.exe"), PARSER_DATA_DICT_EXCEL, True)
-        shutterstock.get_directory_or_create(excel_file_folder)
-        all_photo_info = []
-        for page in range(1, get_offset + 1):
-            shutterstock.parse_photo_page_and_save(get_rubric, "+")
-            soup = shutterstock.read_and_to_soup()
-            photo_links = shutterstock.parse_links(soup)
-            if not photo_links:
-                continue
-            all_photo_info += shutterstock.download_and_save_photos(photo_links, str(BASE_DIR / get_directory))
-            shutterstock.base_link = f"{shutterstock.base_link}?page={page}"
-        if all_photo_info:
-            shutterstock.insert_data(all_photo_info, f"{excel_file_folder}/{get_file_name}.xlsx")
-
-
-if __name__ == "__main__":
-    runner()

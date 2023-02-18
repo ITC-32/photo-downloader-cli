@@ -2,8 +2,8 @@ import urllib3
 from PIL import Image
 from urllib3.exceptions import InsecureRequestWarning
 
-from utils.file_managers import FileManager
-from utils.request_manager import RequestManager
+from .file_managers import FileManager
+from .request_manager import RequestManager
 
 
 class PhotoManager(RequestManager, FileManager):

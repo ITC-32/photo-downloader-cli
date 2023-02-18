@@ -6,7 +6,7 @@ from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.remote.webdriver import WebDriver
 
-from config.configs import BASE_DIR
+from config import BASE_DIR
 
 
 class SeleniumManager:
